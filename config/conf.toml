@@ -1,0 +1,13 @@
+title="System Config File"
+
+[MongoDB]
+
+[Redis]
+host = "127.0.0.1:6379"
+# maxidle 没有redis连接时依然保持的连接数
+maxidle = "1"
+# maxactive 最大激活的连接数
+maxactive = "10"
+# 最大空闲等待时间，超过此时间连接关闭
+idletimeout = 
+
