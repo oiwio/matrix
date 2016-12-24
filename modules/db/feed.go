@@ -76,7 +76,8 @@ func NewFeed(s *mgo.Session, feed *Feed) (*Feed, error) {
 	var (
 		err error
 	)
-	
+
+	feed.FeedId = bson.NewObjectId()
 	collection := Collection(s, feed)
 	err = collection.Insert(feed)
 	if err != nil {

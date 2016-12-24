@@ -3,9 +3,9 @@ package db
 import (
 	"errors"
 	"fmt"
-	"math/rand"
 	"time"
 
+	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -23,19 +23,15 @@ type (
 		Phone         string `json:"phone,omitempty" bson:"phone,omitempty"`
 		PhoneVerified bool   `json:"phoneVerified,omitempty" bson:"phoneVerified,omitempty"`
 
-		Nickname    string     `json:"nickname,omitempty" bson:"nickname,omitempty"`
-		Gender      int        `json:"gender,omitempty" bson:"gender,omitempty"`
-		Orientation int        `json:"orientation,omitempty" bson:"orientation,omitempty"` //0男 1女 2双性
-		Avatar      string     `json:"avatar,omitempty" bson:"avatar,omitempty"`
-		Tags        []*UserTag `json:"tags,omitempty" bson:"tags,omitempty"`
-		Signature   string     `json:"signature,omitempty" bson:"signature,omitempty"`
-		Coordinate  []float64  `json:"coordinate,omitempty" bson:"coordinate,omitempty"` //坐标
+		Nickname   string    `json:"nickname,omitempty" bson:"nickname,omitempty"`
+		Gender     int       `json:"gender,omitempty" bson:"gender,omitempty"` //女0 男1
+		Avatar     string    `json:"avatar,omitempty" bson:"avatar,omitempty"`
+		Signature  string    `json:"signature,omitempty" bson:"signature,omitempty"`
+		Coordinate []float64 `json:"coordinate,omitempty" bson:"coordinate,omitempty"` //坐标
 
 		Birthday      int64  `json:"birthday,omitempty" bson:"birthday,omitempty"`
 		Constellation string `json:"constellation,omitempty" bson:"constellation,omitempty"` //星座
 		Age           int    `json:"age,omitempty" bson:"age,omitempty"`
-		Height        int    `json:"height,omitempty" bson:"height,omitempty"`
-		Weight        int    `json:"weight,omitempty" bson:"weight,omitempty"`
 
 		Region string `json:"region,omitempty" bson:"region,omitempty"`
 
@@ -51,14 +47,9 @@ type (
 		OpenAccounts []*OpenAccount `json:"openIds,omitempty" bson:"openIds,omitempty"`
 
 		//用户授权
-		AccessToken string `json:"accessToken,omitempty" bson:"accessToken,omitempty"`
+		AccessToken  string `json:"accessToken,omitempty" bson:"accessToken,omitempty"`
 		RefreshToken string `json:"refreshToken" bson:"refreshToken"`
 		ExpiresIn    int64  `json:"expiresIn" bson:"expiresIn"`
-	}
-
-	UserTag struct {
-		TagId   bson.ObjectId `json:"tagId,omitempty" bson:"tagId"`
-		TagName string        `json:"feedName,omitempty" bson:"feedName,omitempty"`
 	}
 
 	UserStatus struct {
@@ -92,14 +83,13 @@ type (
 /**
  * 新建用户
  */
-func NewUser(s *mgo.Session, user *User) (*User, error) {
+func NewUser(s *mgo.Session, user *User, password string) (*User, error) {
 	var (
 		err error
 	)
 
 	user.UserId = bson.NewObjectId()
-
-	//user.HashedPassword, _ = bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	user.HashedPassword, _ = bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	user.CreateAt = time.Now().Unix()
 	user.UpdateAt = user.CreateAt
 
@@ -113,7 +103,6 @@ func NewUser(s *mgo.Session, user *User) (*User, error) {
 	settings.DNDPeriods = true
 
 	user.Settings = settings
-	user.Nickname = GenerateNickname(1)
 	collection := Collection(s, user)
 	err = collection.Insert(user)
 	if err != nil {
@@ -199,10 +188,6 @@ func UpdateUserProfile(s *mgo.Session, user *User) error {
 	u.Birthday = user.Birthday
 	u.Constellation = user.Constellation
 	u.Age = user.Age
-	u.Height = user.Height
-	u.Weight = user.Weight
-	u.Region = user.Region
-	u.Tags = user.Tags
 
 	err = collection.Update(bson.M{"_id": user.UserId}, u)
 	if err != nil {
@@ -356,20 +341,4 @@ func GetUserByEmail(s *mgo.Session, email string) (*User, error) {
 	}
 
 	return nil, errors.New(fmt.Sprintf("Can not found user with email. %v", email))
-}
-
-//根据语言生成昵称,0 英文，1 中文，2 俄文，3 火星文
-func GenerateNickname(langurage int) string {
-	cnFirstName := [...]string{"可爱的", "变态的", "害羞的", "性感的", "迷人的", "火辣的", "无聊的"}
-	cnLastName := [...]string{"佐助", "鸣人", "路飞", "白胡子", "小樱", "柯南", "一休", "佐为", "卡卡西", "艾斯"}
-	enFirstName := [...]string{"lucky", "fucking", "angry"}
-	enLastName := [...]string{"dog", "cat", "girl"}
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	switch langurage {
-	case 0:
-		return enFirstName[r.Intn(len(enFirstName))] + enLastName[r.Intn(len(enLastName))]
-	case 1:
-		return cnFirstName[r.Intn(len(cnFirstName))] + cnLastName[r.Intn(len(cnLastName))]
-	}
-	return cnFirstName[r.Intn(len(cnFirstName))] + cnLastName[r.Intn(len(cnLastName))]
 }

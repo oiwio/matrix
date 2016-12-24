@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/revel/revel"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -245,12 +244,11 @@ func GetSearchList(songname string) ([]*db.Music, error) {
 
 func GetNeteaseSongList(songId string) (*db.Music, error) {
 	url := fmt.Sprintf(gNeteaseAPIUrlBase+gNeteaseSongListUrl, songId)
-	// revel.INFO.Println(url)
+
 	ret := GetUrl(gNeteaseClient, url)
 	if nil == ret {
 		return nil, errors.New("error accessing url")
 	}
-	revel.INFO.Println(string(ret))
 	var songlistRet NeteaseSongListRet
 	err := json.Unmarshal(ret, &songlistRet)
 	if nil != err {
@@ -272,5 +270,6 @@ func GetNeteaseSongList(songId string) (*db.Music, error) {
 		})
 	}
 
+	fmt.Println(musics)
 	return musics[0], nil
 }

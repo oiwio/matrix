@@ -1,23 +1,10 @@
 package main
 
-import (
-	"github.com/gorilla/mux"
-	"github.com/meatballhat/negroni-logrus"
-	"github.com/urfave/negroni"
-	"matrix/controllers"
-)
+import "net/http"
 
 func main() {
-	r := mux.NewRouter()
 
-	// Router binding
-	r.HandleFunc("/", controllers.HomeHandler)
-	r.HandleFunc("/feed",controllers.PostFeed).Methods("POST")
-	r.HandleFunc("/music/{MusicId}",controllers.GetMusic).Methods("GET")
-	
-	n := negroni.Classic()
-	n.Use(negronilogrus.NewMiddleware())
-	n.UseHandler(r)
+	router := NewRouter()
 
-	n.Run(":1234")
+	http.ListenAndServeTLS(":1234", "./secure/server.crt", "./secure/server.key", router)
 }

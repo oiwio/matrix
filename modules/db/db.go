@@ -14,5 +14,5 @@ var (
 func Collection(s *mgo.Session, m interface{}) *mgo.Collection {
 	typ := reflect.TypeOf(m).Elem()
 	n := typ.Name()
-	return s.DB("oiwio").C(fmt.Sprintf("%s", n))
+	return s.DB("aladdin").C(fmt.Sprintf("%s", n))
 }
