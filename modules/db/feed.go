@@ -14,13 +14,12 @@ type (
 		Nickname string `json:"nickname,omitempty" bson:"nickname,omitempty"`
 		Avatar   string `json:"avatar,omitempty" bson:"avatar,omitempty"`
 
-		Coordinate []float64  `json:"coordinate,omitempty" bson:"coordinate,omitempty"` //坐标
-		Tags       []*FeedTag `json:"tags,omitempty" bson:"tags,omitempty"`
-		Text       string     `json:"text,omitempty" bson:"text,omitempty"`
-		Photo      *Photo     `json:"photo,omitempty" bson:"photo,omitempty"`
-		Video      *Video     `json:"video,omitempty" bson:"video,omitempty"`
-		Audio      *Audio     `json:"audio,omitempty" bson:"audio,omitempty"`
-		Music      *Music     `json:"music,omitempty" bson:"music,omitempty"`
+		Coordinate []float64 `json:"coordinate,omitempty" bson:"coordinate,omitempty"` //坐标
+		Text       string    `json:"text,omitempty" bson:"text,omitempty"`
+		Photo      *Photo    `json:"photo,omitempty" bson:"photo,omitempty"`
+		Video      *Video    `json:"video,omitempty" bson:"video,omitempty"`
+		Audio      *Audio    `json:"audio,omitempty" bson:"audio,omitempty"`
+		Music      *Music    `json:"music,omitempty" bson:"music,omitempty"`
 
 		LikedCount    int64           `json:"likedCount,omitempty" bson:"likedCount,omitempty"`
 		LikedUsers    []bson.ObjectId `json:"likeUsers,omitempty" bson:"likeUsers,omitempty"`
@@ -64,7 +63,7 @@ type (
 	}
 
 	Video struct {
-		VideoUrl string  `json:"videoUrl,omitempty" structs:"videoUrl,omitempty"`
+		VideoUrl string  `json:"url,omitempty" structs:"url,omitempty"`
 		CoverUrl string  `json:"coverUrl,omitempty" structs:"coverUrl,omitempty"`
 		Duration int     `json:"duration,omitempty" structs:"duration,omitempty"`
 		Width    float64 `json:"width,omitempty" structs:"width,omitempty"`

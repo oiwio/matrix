@@ -3,7 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"matrix/modules/db"
-	"modules/protocol"
+	"matrix/modules/protocol"
 	"net/http"
 	"regexp"
 	"time"
@@ -124,6 +124,11 @@ func Register(w http.ResponseWriter, r *http.Request) {
 			JSONResponse(response, w)
 			return
 		}
+	} else {
+		response.Success = false
+		response.Error = protocol.ERROR_CANNOT_REGISTRY
+		JSONResponse(response, w)
+		return
 	}
 }
 
