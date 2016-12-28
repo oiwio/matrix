@@ -20,4 +20,9 @@ const (
 	ERROR_INVALID_GENDER           = ERROR_BASE - 16 // -16 无效的性别
 	ERROR_INVALID_DEVICETOKEN      = ERROR_BASE - 17 // -17 无效的设备Token
 	ERROR_NOT_WHISPER              = ERROR_BASE - 18 //对方设置不能进行私聊
+
+	ERROR_FEED_CANTCREATE = ERROR_BASE - 100 //Feed不能被创建
+	ERROR_FEED_CANTGET    = ERROR_BASE - 101 //不能得到feed
+
+	ERROR_AUTH = ERROR_BASE - 1000 //token认证错误
 )

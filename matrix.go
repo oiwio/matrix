@@ -1,10 +1,15 @@
 package main
 
-import "net/http"
+import (
+	"matrix/routers"
+	"net/http"
+
+	"github.com/urfave/negroni"
+)
 
 func main() {
-
-	router := NewRouter()
-
-	http.ListenAndServeTLS(":1234", "./secure/server.crt", "./secure/server.key", router)
+	router := routers.InitRoutes()
+	n := negroni.Classic()
+	n.UseHandler(router)
+	http.ListenAndServeTLS(":1234", "./secure/server.crt", "./secure/server.key", n)
 }

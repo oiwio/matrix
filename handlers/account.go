@@ -2,14 +2,16 @@ package handlers
 
 import (
 	"encoding/json"
+	"matrix/auth"
 	"matrix/modules/db"
 	"matrix/modules/protocol"
 	"net/http"
 	"regexp"
-	"time"
+
+	"gopkg.in/mgo.v2/bson"
 
 	log "github.com/Sirupsen/logrus"
-	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/gorilla/mux"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -30,7 +32,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		register *UserRegister
 		response *db.UserResponse
 		user     *db.User
-		t        string
+		token    string
 	)
 
 	response = new(db.UserResponse)
@@ -68,11 +70,8 @@ func Register(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			response.Success = true
-			token := jwt.New(jwt.SigningMethodHS256)
-			claims := token.Claims.(jwt.MapClaims)
-			claims["userId"] = user.UserId
-			claims["exp"] = time.Now().Add(time.Hour * 2160)
-			t, err = token.SignedString([]byte("kiwee19920306"))
+			authBackend := auth.InitJWTAuthenticationBackend()
+			token, err = authBackend.GenerateToken(user.UserId.Hex())
 			if err != nil {
 				HandleError(err)
 				response.Success = false
@@ -80,7 +79,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 				JSONResponse(response, w)
 				return
 			}
-			response.Token = t
+			response.Token = token
 			JSONResponse(response, w)
 
 		} else {
@@ -103,11 +102,8 @@ func Register(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			response.Success = true
-			token := jwt.New(jwt.SigningMethodHS256)
-			claims := token.Claims.(jwt.MapClaims)
-			claims["userId"] = user.UserId
-			claims["exp"] = time.Now().Add(time.Hour * 2160)
-			t, err = token.SignedString([]byte("kiwee19920306"))
+			authBackend := auth.InitJWTAuthenticationBackend()
+			token, err = authBackend.GenerateToken(user.UserId.Hex())
 			if err != nil {
 				HandleError(err)
 				response.Success = false
@@ -115,7 +111,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 				JSONResponse(response, w)
 				return
 			}
-			response.Token = t
+			response.Token = token
 			JSONResponse(response, w)
 
 		} else {
@@ -143,7 +139,7 @@ func SignIn(w http.ResponseWriter, r *http.Request) {
 		response *db.UserResponse
 		user     *db.User
 		signIn   *SignIn
-		t        string
+		token    string
 	)
 	response = new(db.UserResponse)
 	err = json.NewDecoder(r.Body).Decode(&signIn)
@@ -185,11 +181,8 @@ func SignIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	response.Success = true
-	token := jwt.New(jwt.SigningMethodHS256)
-	claims := token.Claims.(jwt.MapClaims)
-	claims["userId"] = user.UserId
-	claims["exp"] = time.Now().Add(time.Hour * 2160)
-	t, err = token.SignedString([]byte("kiwee19920306"))
+	authBackend := auth.InitJWTAuthenticationBackend()
+	token, err = authBackend.GenerateToken(user.UserId.Hex())
 	if err != nil {
 		HandleError(err)
 		response.Success = false
@@ -197,8 +190,53 @@ func SignIn(w http.ResponseWriter, r *http.Request) {
 		JSONResponse(response, w)
 		return
 	}
-	response.Token = t
+	response.Token = token
 	JSONResponse(response, w)
+}
+
+func RefreshToken(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	var (
+		userId   bson.ObjectId
+		err      error
+		response *db.UserResponse
+		token    string
+	)
+	response = new(db.UserResponse)
+	//Create session for every request
+	session := mgoSession.Copy()
+	defer session.Close()
+
+	//处理ObjectIdHex在接收错误id之后抛出的异常
+	defer func() {
+		if e := recover(); e != nil {
+			response.Success = false
+			response.Error = protocol.ERROR_FEED_CANTGET
+			json.NewEncoder(w).Encode(response)
+		}
+	}()
+
+	userId = bson.ObjectIdHex(mux.Vars(r)["UserId"])
+	if db.IsUserExist(session, userId) {
+		response.Success = true
+		authBackend := auth.InitJWTAuthenticationBackend()
+		token, err = authBackend.GenerateToken(userId.Hex())
+		if err != nil {
+			HandleError(err)
+			response.Success = false
+			response.Error = protocol.ERROR_INTERNAL_ERROR
+			JSONResponse(response, w)
+			return
+		}
+		response.Token = token
+		JSONResponse(response, w)
+		return
+	} else {
+		HandleError(err)
+		response.Success = false
+		response.Error = protocol.ERROR_INVALID_USER
+		JSONResponse(response, w)
+		return
+	}
 }
 
 func isValidPhone(phone string) bool {

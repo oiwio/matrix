@@ -11,7 +11,7 @@ type (
 	//user response
 	UserResponse struct {
 		Response
-		Token string  `json:"token,omitempty`
+		Token string  `json:"token,omitempty"`
 		User  *User   `json:"user,omitempty"`
 		Users []*User `json:"users,omitempty"`
 	}
