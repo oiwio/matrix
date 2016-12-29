@@ -10,7 +10,6 @@ import (
 
 	"gopkg.in/mgo.v2/bson"
 
-	"github.com/gorilla/mux"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -195,28 +194,31 @@ func SignIn(w http.ResponseWriter, r *http.Request) {
 	JSONResponse(response, w)
 }
 
-func RefreshToken(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+func RefreshToken(w http.ResponseWriter, r *http.Request) {
 	var (
-		userId   bson.ObjectId
-		err      error
-		response *db.UserResponse
-		token    string
+		userIdString string
+		userId       bson.ObjectId
+		err          error
+		response     *db.UserResponse
+		token        string
 	)
+
 	response = new(db.UserResponse)
+	userIdString, err = auth.GetTokenFromRequest(r)
+	if err != nil {
+		HandleError(err)
+		response.Success = false
+		response.Error = protocol.ERROR_AUTH
+		JSONResponse(response, w)
+		return
+	}
+
+	userId = bson.ObjectIdHex(userIdString)
+
 	//Create session for every request
 	session := mgoSession.Copy()
 	defer session.Close()
 
-	//处理ObjectIdHex在接收错误id之后抛出的异常
-	defer func() {
-		if e := recover(); e != nil {
-			response.Success = false
-			response.Error = protocol.ERROR_FEED_CANTGET
-			json.NewEncoder(w).Encode(response)
-		}
-	}()
-
-	userId = bson.ObjectIdHex(mux.Vars(r)["UserId"])
 	if db.IsUserExist(session, userId) {
 		response.Success = true
 		authBackend := auth.InitJWTAuthenticationBackend()

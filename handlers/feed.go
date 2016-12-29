@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"matrix/auth"
 	"matrix/modules/db"
 	"matrix/modules/protocol"
 	"matrix/modules/tools"
@@ -14,14 +15,26 @@ import (
 )
 
 // PostFeed receive POST methods and store them in MongoDB
-func PostFeed(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+func PostFeed(w http.ResponseWriter, r *http.Request) {
 	var (
-		err      error
-		response *db.FeedResponse
-		feed     *db.Feed
+		userIdString string
+		userId       bson.ObjectId
+		err          error
+		response     *db.FeedResponse
+		feed         *db.Feed
 	)
 
 	response = new(db.FeedResponse)
+	userIdString, err = auth.GetTokenFromRequest(r)
+	if err != nil {
+		HandleError(err)
+		response.Success = false
+		response.Error = protocol.ERROR_AUTH
+		JSONResponse(response, w)
+		return
+	}
+	userId = bson.ObjectIdHex(userIdString)
+
 	err = json.NewDecoder(r.Body).Decode(&feed)
 	if err != nil {
 		HandleError(err)
@@ -30,8 +43,9 @@ func PostFeed(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 		json.NewEncoder(w).Encode(response)
 		return
 	}
+
 	feed.FeedId = bson.NewObjectId()
-	// feed.UserId =
+	feed.UserId = userId
 	feed.CreateAt = time.Now().Unix()
 	feed.UpdateAt = feed.CreateAt
 
@@ -76,7 +90,7 @@ func GetMusic(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetFeedById need a feedId and return the detail of feed
-func GetFeedById(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+func GetFeedById(w http.ResponseWriter, r *http.Request) {
 	var (
 		err      error
 		feed     *db.Feed
