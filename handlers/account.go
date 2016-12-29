@@ -10,7 +10,6 @@ import (
 
 	"gopkg.in/mgo.v2/bson"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -44,7 +43,6 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		JSONResponse(response, w)
 		return
 	}
-	log.Infoln("来用户了！！")
 	user = new(db.User)
 	user.Nickname = register.Nickname
 	user.Username = register.Username
@@ -80,6 +78,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			response.Token = token
+			response.User = user
 			JSONResponse(response, w)
 
 		} else {
@@ -111,6 +110,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 				JSONResponse(response, w)
 				return
 			}
+			response.User = user
 			response.Token = token
 			JSONResponse(response, w)
 
@@ -181,6 +181,7 @@ func SignIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	response.Success = true
+	response.User = user
 	authBackend := auth.InitJWTAuthenticationBackend()
 	token, err = authBackend.GenerateToken(user.UserId.Hex())
 	if err != nil {
