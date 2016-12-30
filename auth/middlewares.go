@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"gopkg.in/mgo.v2/bson"
+
 	"errors"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -29,7 +31,7 @@ func RequireTokenAuthentication(w http.ResponseWriter, r *http.Request, next htt
 	}
 }
 
-func GetTokenFromRequest(r *http.Request) (string, error) {
+func GetTokenFromRequest(r *http.Request) (bson.ObjectId, error) {
 	authBackend := InitJWTAuthenticationBackend()
 	token, err := request.ParseFromRequest(r, request.AuthorizationHeaderExtractor, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
@@ -39,7 +41,8 @@ func GetTokenFromRequest(r *http.Request) (string, error) {
 		}
 	})
 	if err == nil && token.Valid {
-		return token.Claims.(jwt.MapClaims)["sub"].(string), nil
+
+		return bson.ObjectIdHex(token.Claims.(jwt.MapClaims)["sub"].(string)), nil
 	} else {
 		return "", errors.New("Not authorized")
 	}

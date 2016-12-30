@@ -196,24 +196,21 @@ func SignIn(w http.ResponseWriter, r *http.Request) {
 
 func RefreshToken(w http.ResponseWriter, r *http.Request) {
 	var (
-		userIdString string
-		userId       bson.ObjectId
-		err          error
-		response     *db.UserResponse
-		token        string
+		userId   bson.ObjectId
+		err      error
+		response *db.UserResponse
+		token    string
 	)
 
 	response = new(db.UserResponse)
-	userIdString, err = auth.GetTokenFromRequest(r)
+	userId, err = auth.GetTokenFromRequest(r)
 	if err != nil {
 		HandleError(err)
 		response.Success = false
-		response.Error = protocol.ERROR_AUTH
+		response.Error = protocol.ERROR_NEED_SIGNIN
 		JSONResponse(response, w)
 		return
 	}
-
-	userId = bson.ObjectIdHex(userIdString)
 
 	//Create session for every request
 	session := mgoSession.Copy()

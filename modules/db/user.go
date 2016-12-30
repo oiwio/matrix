@@ -33,6 +33,9 @@ type (
 		Constellation string `json:"constellation,omitempty" bson:"constellation,omitempty"` //星座
 		Age           int    `json:"age,omitempty" bson:"age,omitempty"`
 
+		Following int64 `json:"following,omitempty" bson:"following,omitempty"`
+		Follower  int64 `json:"follower,omitempty" bson:"follower,omitempty"`
+
 		Region string `json:"region,omitempty" bson:"region,omitempty"`
 
 		// 黑名单
@@ -41,20 +44,9 @@ type (
 		CreateAt int64 `json:"createAt,omitempty" bson:"createAt,omitempty"`
 		UpdateAt int64 `json:"updateAt,omitempty" bson:"updateAt,omitempty"`
 
-		Status   *UserStatus   `json:"status,omitempty" bson:"status,omitempty"`
 		Settings *UserSettings `json:"settings,omitempty" bson:"settings,omitempty"`
 
 		OpenAccounts []*OpenAccount `json:"openIds,omitempty" bson:"openIds,omitempty"`
-
-		//用户授权
-		AccessToken  string `json:"accessToken,omitempty" bson:"accessToken,omitempty"`
-		RefreshToken string `json:"refreshToken" bson:"refreshToken"`
-		ExpiresIn    int64  `json:"expiresIn" bson:"expiresIn"`
-	}
-
-	UserStatus struct {
-		Following int64 `json:"following,omitempty" bson:"following,omitempty"`
-		Follower  int64 `json:"follower,omitempty" bson:"follower,omitempty"`
 	}
 
 	UserSettings struct {
@@ -283,6 +275,7 @@ func GetUserById(s *mgo.Session, userId bson.ObjectId) (*User, error) {
 
 	user := new(User)
 	err = Collection(s, user).FindId(userId).One(user)
+	fmt.Println(err)
 	return user, err
 }
 
@@ -298,20 +291,6 @@ func GetUserByDeviceToken(s *mgo.Session, deviceToken string) (*User, error) {
 		return user, err
 	}
 	return nil, errors.New(fmt.Sprintf("Can not found user with phone no. %v | Reason:%v", deviceToken, err.Error()))
-}
-
-func GetUserByAccessToken(s *mgo.Session, token string) (*User, error) {
-
-	var (
-		err error
-	)
-
-	user := new(User)
-	err = Collection(s, user).Find(bson.M{"accessToken": token}).One(user)
-	if err == nil {
-		return user, err
-	}
-	return nil, errors.New(fmt.Sprintf("Can not found user with phone no. %v | Reason:%v", token, err.Error()))
 }
 
 //根据手机号搜索用户
