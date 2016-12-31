@@ -7,6 +7,7 @@ import (
 	"matrix/modules/protocol"
 	"matrix/modules/tools"
 	"net/http"
+	"strconv"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -24,6 +25,7 @@ func PostFeed(w http.ResponseWriter, r *http.Request) {
 	)
 
 	response = new(db.FeedResponse)
+
 	userId, err = auth.GetTokenFromRequest(r)
 	if err != nil {
 		HandleError(err)
@@ -92,6 +94,7 @@ func GetFeedById(w http.ResponseWriter, r *http.Request) {
 	var (
 		err      error
 		feed     *db.Feed
+		comments []*db.Comment
 		feedId   bson.ObjectId
 		response *db.FeedResponse
 	)
@@ -122,6 +125,9 @@ func GetFeedById(w http.ResponseWriter, r *http.Request) {
 	feedId = bson.ObjectIdHex(mux.Vars(r)["FeedId"])
 
 	feed, err = db.GetFeedById(session, feedId)
+	comments, err = db.GetCommentsByFeedId(session, feedId, time.Now().Unix())
+
+	feed.Comments = comments
 	if err != nil {
 		HandleError(err)
 		response.Success = false
@@ -129,6 +135,7 @@ func GetFeedById(w http.ResponseWriter, r *http.Request) {
 		JSONResponse(response, w)
 		return
 	}
+
 	response.Success = true
 	response.Feed = feed
 	JSONResponse(response, w)
@@ -201,18 +208,16 @@ func DelFeed(w http.ResponseWriter, r *http.Request) {
 
 // GetFeedsByUserId return the personal feeds
 func GetFeedsByUserId(w http.ResponseWriter, r *http.Request) {
-	type RequestBody struct {
-		UserId    string `json:"userId"`
-		Timestamp int64  `json:"timestamp"`
-	}
 
 	var (
-		rb       *RequestBody
-		err      error
-		userId   bson.ObjectId
-		feeds    []*db.Feed
-		response *db.FeedResponse
+		err       error
+		timestamp int64
+		userId    bson.ObjectId
+		feeds     []*db.Feed
+		response  *db.FeedResponse
 	)
+
+	log.Infoln(r.FormValue("u"))
 	response = new(db.FeedResponse)
 
 	_, err = auth.GetTokenFromRequest(r)
@@ -220,15 +225,6 @@ func GetFeedsByUserId(w http.ResponseWriter, r *http.Request) {
 		HandleError(err)
 		response.Success = false
 		response.Error = protocol.ERROR_NEED_SIGNIN
-		JSONResponse(response, w)
-		return
-	}
-
-	err = json.NewDecoder(r.Body).Decode(&rb)
-	if err != nil {
-		HandleError(err)
-		response.Success = false
-		response.Error = protocol.ERROR_INVALID_REQUEST
 		JSONResponse(response, w)
 		return
 	}
@@ -245,9 +241,65 @@ func GetFeedsByUserId(w http.ResponseWriter, r *http.Request) {
 			json.NewEncoder(w).Encode(response)
 		}
 	}()
-	userId = bson.ObjectIdHex(rb.UserId)
 
-	feeds, err = db.GetFeedsByUserId(session, userId, rb.Timestamp)
+	userId = bson.ObjectIdHex(r.FormValue("u"))
+	timestamp, err = strconv.ParseInt(r.FormValue("t"), 10, 64)
+	if err != nil {
+		panic(err)
+	}
+
+	feeds, err = db.GetFeedsByUserId(session, userId, timestamp)
+	if err != nil {
+		HandleError(err)
+		response.Success = false
+		response.Error = protocol.ERROR_INTERNAL_ERROR
+		JSONResponse(response, w)
+		return
+	}
+	response.Success = true
+	response.Feeds = feeds
+	JSONResponse(response, w)
+}
+
+// GetNewestFeeds return the neweast feeds
+func GetNewestFeeds(w http.ResponseWriter, r *http.Request) {
+
+	var (
+		timestamp int64
+		err       error
+		feeds     []*db.Feed
+		response  *db.FeedResponse
+	)
+
+	response = new(db.FeedResponse)
+
+	_, err = auth.GetTokenFromRequest(r)
+	if err != nil {
+		HandleError(err)
+		response.Success = false
+		response.Error = protocol.ERROR_NEED_SIGNIN
+		JSONResponse(response, w)
+		return
+	}
+
+	//Create session for every request
+	session := mgoSession.Copy()
+	defer session.Close()
+
+	//处理接收错误的时间戳抛出的异常
+	defer func() {
+		if e := recover(); e != nil {
+			response.Success = false
+			response.Error = protocol.ERROR_INVALID_REQUEST
+			json.NewEncoder(w).Encode(response)
+		}
+	}()
+	timestamp, err = strconv.ParseInt(r.FormValue("t"), 10, 64)
+	if err != nil {
+		panic(err)
+	}
+
+	feeds, err = db.GetNewestFeeds(session, timestamp)
 	if err != nil {
 		HandleError(err)
 		response.Success = false

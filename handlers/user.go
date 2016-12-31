@@ -38,8 +38,8 @@ func GetProfile(w http.ResponseWriter, r *http.Request) {
 				json.NewEncoder(w).Encode(response)
 			}
 		}()
-
 		userId = bson.ObjectIdHex(mux.Vars(r)["UserId"])
+
 	} else {
 		userId, err = auth.GetTokenFromRequest(r)
 		if err != nil {
@@ -58,7 +58,7 @@ func GetProfile(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		HandleError(err)
 		response.Success = false
-		response.Error = protocol.ERROR_INTERNAL_ERROR
+		response.Error = protocol.ERROR_INVALID_USER
 		JSONResponse(response, w)
 		return
 	}

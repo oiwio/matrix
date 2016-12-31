@@ -27,4 +27,10 @@ type (
 		Music  *Music   `json:"music,omitempty"`
 		Musics []*Music `json:"musics,omitempty"`
 	}
+
+	CommentResponse struct {
+		Response
+		Comment  *Comment   `json:"comment,omitempty"`
+		Comments []*Comment `json:"comments,omitempty"`
+	}
 )

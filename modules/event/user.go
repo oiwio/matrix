@@ -1,8 +1,7 @@
 package event
 
 import (
-	"oiwio/app/models/db"
-	// "slave/models/db"
+	"matrix/modules/db"
 	"time"
 )
 

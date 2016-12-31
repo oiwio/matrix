@@ -98,14 +98,19 @@ func GetFeedById(s *mgo.Session, feedId bson.ObjectId) (*Feed, error) {
 	return feed, err
 }
 
-func GetNewestFeeds(s *mgo.Session, page int) ([]*Feed, error) {
+func GetNewestFeeds(s *mgo.Session, timestamp int64) ([]*Feed, error) {
 	var (
 		err   error
 		feed  *Feed
 		feeds []*Feed
 	)
 	feeds = make([]*Feed, 15)
-	err = Collection(s, feed).Find(nil).Limit(15).Skip(page * 15).All(&feeds)
+	err = Collection(s, feed).Find(
+		bson.M{
+			"updateAt": bson.M{
+				"$lt": timestamp,
+			},
+		}).Limit(15).Sort("-updateAt").All(&feeds)
 	return feeds, err
 }
 

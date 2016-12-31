@@ -1,8 +1,8 @@
 package event
 
 import (
-	"oiwio/app/models/db"
-	// "slave/models/db"
+	"matrix/modules/db"
+
 	"gopkg.in/mgo.v2/bson"
 )
 
