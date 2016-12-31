@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"time"
 
+	"errors"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"gopkg.in/mgo.v2/bson"
@@ -56,6 +58,7 @@ func PostComment(w http.ResponseWriter, r *http.Request) {
 	//处理ObjectIdHex在接收错误id之后抛出的异常
 	defer func() {
 		if e := recover(); e != nil {
+			HandleError(e.(error))
 			response.Success = false
 			response.Error = protocol.ERROR_INVALID_REQUEST
 			json.NewEncoder(w).Encode(response)
@@ -70,6 +73,9 @@ func PostComment(w http.ResponseWriter, r *http.Request) {
 	}
 	comment.Content = rb.Conetent
 	comment.Author, err = db.GetCommentUser(session, userId)
+	if comment.Author == nil {
+		panic(errors.New("Can't find this user"))
+	}
 	comment.CreateAt = time.Now().Unix()
 
 	comment, err = db.NewComment(session, comment)
