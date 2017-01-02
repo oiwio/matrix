@@ -53,6 +53,14 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	session := mgoSession.Copy()
 	defer session.Close()
 
+	_, err = db.GetUserByUsername(session, register.Username)
+	if err == nil {
+		response.Success = false
+		response.Error = protocol.ERROR_USERNAME_ALREADY_INUSE
+		JSONResponse(response, w)
+		return
+	}
+
 	if isValidPhone(register.Account) {
 		//手机注册
 		_, err = db.GetUserByPhone(session, register.Account)
@@ -236,6 +244,69 @@ func RefreshToken(w http.ResponseWriter, r *http.Request) {
 		response.Error = protocol.ERROR_INVALID_USER
 		JSONResponse(response, w)
 		return
+	}
+}
+
+func IsExist(w http.ResponseWriter, r *http.Request) {
+	var (
+		err      error
+		username string
+		email    string
+		phone    string
+		user     *db.User
+		response *db.Response
+	)
+
+	response = new(db.Response)
+	username = r.FormValue("u")
+	email = r.FormValue("e")
+	phone = r.FormValue("p")
+	//Create session for every request
+	session := mgoSession.Copy()
+	defer session.Close()
+	if username != "" {
+		user, err = db.GetUserByUsername(session, username)
+		if err != nil || user == nil {
+			HandleError(err)
+			response.Success = false
+			JSONResponse(response, w)
+			return
+		} else {
+			response.Success = true
+			response.Error = protocol.ERROR_USERNAME_ALREADY_INUSE
+			JSONResponse(response, w)
+			return
+		}
+	} else if email != "" {
+		user, err = db.GetUserByEmail(session, email)
+		if err != nil || user == nil {
+			HandleError(err)
+			response.Success = false
+			JSONResponse(response, w)
+			return
+		} else {
+			response.Success = true
+			response.Error = protocol.ERROR_EMAIL_ALREADY_REGISTRIED
+			JSONResponse(response, w)
+			return
+		}
+	} else if phone != "" {
+		user, err = db.GetUserByPhone(session, phone)
+		if err != nil || user == nil {
+			HandleError(err)
+			response.Success = false
+			JSONResponse(response, w)
+			return
+		} else {
+			response.Success = true
+			response.Error = protocol.ERROR_PHONE_ALREADY_REGISTRIED
+			JSONResponse(response, w)
+			return
+		}
+	} else {
+		response.Success = false
+		response.Error = protocol.ERROR_INVALID_REQUEST
+		JSONResponse(response, w)
 	}
 }
 

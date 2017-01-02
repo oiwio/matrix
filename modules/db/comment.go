@@ -75,6 +75,15 @@ func DeleteComment(s *mgo.Session, commentId bson.ObjectId) error {
 	return err
 }
 
+func DeleteCommentByFeedId(s *mgo.Session, feedId bson.ObjectId) error {
+	var (
+		err     error
+		comment *Comment
+	)
+	_, err = Collection(s, comment).RemoveAll(bson.M{"feedId": feedId})
+	return err
+}
+
 func GetCommentUser(s *mgo.Session, userId bson.ObjectId) (*CommentUser, error) {
 	var (
 		err error

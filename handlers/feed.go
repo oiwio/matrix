@@ -180,6 +180,7 @@ func DelFeed(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		if feed.UserId == userId {
 			err = db.DeleteFeed(session, feedId)
+			err = db.DeleteCommentByFeedId(session, feedId)
 			if err != nil {
 				HandleError(err)
 				response.Success = false

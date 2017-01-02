@@ -321,3 +321,18 @@ func GetUserByEmail(s *mgo.Session, email string) (*User, error) {
 
 	return nil, errors.New(fmt.Sprintf("Can not found user with email. %v", email))
 }
+
+//根据用户名搜索用户
+func GetUserByUsername(s *mgo.Session, username string) (*User, error) {
+	var (
+		err error
+	)
+
+	user := new(User)
+	err = Collection(s, user).Find(bson.M{"username": username}).One(user)
+	if err == nil {
+		return user, err
+	}
+
+	return nil, errors.New(fmt.Sprintf("Can not found user with username. %v", username))
+}
