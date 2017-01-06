@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"matrix/config"
 	"matrix/modules/db"
 	"net/http"
 	"runtime"
@@ -20,9 +21,13 @@ var (
 
 func init() {
 	var (
-		err error
+		err           error
+		configuration config.Config
 	)
-	mgoSession, err = mgo.Dial("127.0.0.1")
+
+	configuration = config.New()
+
+	mgoSession, err = mgo.Dial(configuration.MongoDB.Host)
 	if err != nil {
 		panic(err)
 	}

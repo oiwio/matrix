@@ -5,6 +5,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"matrix/config"
 	"os"
 	"time"
 
@@ -16,14 +17,12 @@ type JWTAuthenticationBackend struct {
 	PublicKey  *rsa.PublicKey
 }
 
-const (
-	// privateKeyPath = "/Users/kiwee/go/src/matrix/secure/app.rsa"
-	// publicKeyPath  = "/Users/kiwee/go/src/matrix/secure/app.rsa.pub"
-	privateKeyPath = "/opt/go/src/matrix/secure/app.rsa"
-	publicKeyPath  = "/opt/go/src/matrix/secure/app.rsa.pub"
-	tokenDuration  = 72
-	expireOffset   = 3600
-)
+var configuration config.Config
+
+func init() {
+	configuration = config.New()
+	// log.Infoln(configuration)
+}
 
 var authBackendInstance *JWTAuthenticationBackend = nil
 
@@ -41,7 +40,7 @@ func InitJWTAuthenticationBackend() *JWTAuthenticationBackend {
 func (backend *JWTAuthenticationBackend) GenerateToken(userId string) (string, error) {
 	token := jwt.New(jwt.SigningMethodRS512)
 	claims := token.Claims.(jwt.MapClaims)
-	claims["exp"] = time.Now().Add(time.Hour * time.Duration(72)).Unix()
+	claims["exp"] = time.Now().Add(time.Hour * time.Duration(configuration.Authentication.TokenDuration)).Unix()
 	claims["iat"] = time.Now().Unix()
 	claims["sub"] = userId
 	tokenString, err := token.SignedString(backend.privateKey)
@@ -80,7 +79,7 @@ func (backend *JWTAuthenticationBackend) GenerateToken(userId string) (string, e
 // }
 
 func getPrivateKey() *rsa.PrivateKey {
-	privateKeyFile, err := os.Open(privateKeyPath)
+	privateKeyFile, err := os.Open(configuration.Authentication.PrivateKeyPath)
 	if err != nil {
 		panic(err)
 	}
@@ -106,7 +105,7 @@ func getPrivateKey() *rsa.PrivateKey {
 }
 
 func getPublicKey() *rsa.PublicKey {
-	publicKeyFile, err := os.Open(publicKeyPath)
+	publicKeyFile, err := os.Open(configuration.Authentication.PublicKeyPath)
 	if err != nil {
 		panic(err)
 	}

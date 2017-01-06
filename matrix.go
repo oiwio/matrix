@@ -11,5 +11,5 @@ func main() {
 	router := routers.InitRoutes()
 	n := negroni.Classic()
 	n.UseHandler(router)
-	http.ListenAndServeTLS(":1234", "./secure/server.crt", "./secure/server.key", n)
+	http.ListenAndServeTLS(configuration.Server.Host, configuration.Server.ServerCertificatePath, configuration.Server.ServerKeyPath, n)
 }
