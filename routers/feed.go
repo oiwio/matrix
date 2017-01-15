@@ -10,6 +10,8 @@ func SetFeedRoutes(router *mux.Router) *mux.Router {
 	router.HandleFunc("/feed", handlers.PostFeed).Methods("POST")
 	router.HandleFunc("/feed/{FeedId}", handlers.GetFeedById).Methods("GET")
 	router.HandleFunc("/feed/{FeedId}", handlers.DelFeed).Methods("DELETE")
+	router.HandleFunc("/music", handlers.SearchMusic).Methods("GET")
+	router.HandleFunc("/music/{MusicId}", handlers.GetMusic).Methods("GET")
 	router.HandleFunc("/u/feed", handlers.GetFeedsByUserId).Methods("GET")
 	router.HandleFunc("/feeds", handlers.GetNewestFeeds).Methods("GET")
 	router.HandleFunc("/comment", handlers.PostComment).Methods("POST")

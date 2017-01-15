@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"matrix/config"
 	"matrix/modules/db"
+	"matrix/producer"
 	"net/http"
 	"runtime"
 
@@ -26,6 +27,8 @@ func init() {
 	)
 
 	configuration = config.New()
+
+	producer.Connect(configuration.NSQ.Host)
 
 	mgoSession, err = mgo.Dial(configuration.MongoDB.Host)
 	if err != nil {

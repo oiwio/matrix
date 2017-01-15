@@ -14,6 +14,9 @@ expireOffset  = 3600
 [MongoDB]
 host = "127.0.0.1"
 
+[NSQ]
+host = "127.0.0.1:4150"
+
 [Redis]
 host = "127.0.0.1:6379"
 # maxidle 没有redis连接时依然保持的连接数

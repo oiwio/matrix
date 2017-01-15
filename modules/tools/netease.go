@@ -9,10 +9,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"matrix/modules/db"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
-	"matrix/modules/db"
 	"strconv"
 	"strings"
 )
@@ -47,8 +47,8 @@ func GetUrl(client *http.Client, url string) []byte {
 	return body
 }
 
-func PostUrl(client *http.Client, songurl string, songname string) []byte {
-	songparam := "s=" + songname + "&limit=20&type=1&offset=0"
+func PostUrl(client *http.Client, songurl string, songname string, limit string, offset string) []byte {
+	songparam := "s=" + songname + "&limit=" + limit + "&type=1&offset=" + offset
 	resp, err := client.Post(songurl, "application/x-www-form-urlencoded", strings.NewReader(songparam))
 	if err != nil {
 		log.Printf("error get url %s: %s", songurl, err)
@@ -212,9 +212,9 @@ type NeteaseArtist struct {
 	Name string `json:"name,omitempty"`
 }
 
-func GetSearchList(songname string) ([]*db.Music, error) {
+func GetSearchList(songname string, limit string, offset string) ([]*db.Music, error) {
 	songurl := "http://music.163.com/api/search/get/"
-	ret := PostUrl(gNeteaseClient, songurl, songname)
+	ret := PostUrl(gNeteaseClient, songurl, songname, limit, offset)
 	// fmt.Printf(string(ret))
 	if nil == ret {
 		return nil, errors.New("error accessing url")
@@ -249,6 +249,7 @@ func GetNeteaseSongList(songId string) (*db.Music, error) {
 	if nil == ret {
 		return nil, errors.New("error accessing url")
 	}
+
 	var songlistRet NeteaseSongListRet
 	err := json.Unmarshal(ret, &songlistRet)
 	if nil != err {
@@ -270,6 +271,8 @@ func GetNeteaseSongList(songId string) (*db.Music, error) {
 		})
 	}
 
-	fmt.Println(musics)
-	return musics[0], nil
+	if len(musics) != 0 {
+		return musics[0], nil
+	}
+	return nil, nil
 }

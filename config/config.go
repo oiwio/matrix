@@ -8,6 +8,7 @@ type (
 		Server         server
 		Authentication authentication
 		MongoDB        mongoDB
+		NSQ            nsq
 		Redis          redis
 	}
 
@@ -25,6 +26,10 @@ type (
 	}
 
 	mongoDB struct {
+		Host string
+	}
+
+	nsq struct {
 		Host string
 	}
 

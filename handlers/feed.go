@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"matrix/auth"
 	"matrix/modules/db"
+	"matrix/modules/event"
 	"matrix/modules/protocol"
 	"matrix/modules/tools"
+	// "matrix/producer"
 	"net/http"
 	"strconv"
 	"time"
@@ -18,13 +20,15 @@ import (
 // PostFeed receive POST methods and store them in MongoDB
 func PostFeed(w http.ResponseWriter, r *http.Request) {
 	var (
-		userId   bson.ObjectId
-		err      error
-		response *db.FeedResponse
-		feed     *db.Feed
+		userId    bson.ObjectId
+		err       error
+		response  *db.FeedResponse
+		feed      *db.Feed
+		feedEvent *event.FeedEvent
 	)
 
 	response = new(db.FeedResponse)
+	feedEvent = new(event.FeedEvent)
 
 	userId, err = auth.GetTokenFromRequest(r)
 	if err != nil {
@@ -53,6 +57,9 @@ func PostFeed(w http.ResponseWriter, r *http.Request) {
 	session := mgoSession.Copy()
 	defer session.Close()
 
+	feedEvent.EventId = event.EVENT_FEED_CREATE
+	feedEvent.Feed = feed
+	// producer.PublishJSONAsync("feed", feedEvent, nil)
 	_, err = db.NewFeed(session, feed)
 	if err != nil {
 		HandleError(err)
@@ -85,6 +92,28 @@ func GetMusic(w http.ResponseWriter, r *http.Request) {
 	}
 	response.Success = true
 	response.Music = music
+	log.Infoln(response)
+	JSONResponse(response, w)
+}
+
+// SearchMusic reveive GET methods and return the details of music
+func SearchMusic(w http.ResponseWriter, r *http.Request) {
+	var (
+		err      error
+		musics   []*db.Music
+		response *db.MusicResponse
+	)
+	response = new(db.MusicResponse)
+	musics, err = tools.GetSearchList(r.FormValue("s"), r.FormValue("limit"), r.FormValue("offset"))
+	if err != nil {
+		HandleError(err)
+		response.Success = false
+		response.Error = protocol.ERROR_INVALID_REQUEST
+		JSONResponse(response, w)
+		return
+	}
+	response.Success = true
+	response.Musics = musics
 	log.Infoln(response)
 	JSONResponse(response, w)
 }
