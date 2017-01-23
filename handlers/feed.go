@@ -3,10 +3,11 @@ package handlers
 import (
 	"encoding/json"
 	"matrix/auth"
-	"matrix/modules/db"
-	"matrix/modules/event"
-	"matrix/modules/protocol"
-	"matrix/modules/tools"
+	"matrix/producer"
+	"zion/db"
+	"zion/event"
+	"zion/protocol"
+	"zion/tools"
 	// "matrix/producer"
 	"net/http"
 	"strconv"
@@ -59,15 +60,7 @@ func PostFeed(w http.ResponseWriter, r *http.Request) {
 
 	feedEvent.EventId = event.EVENT_FEED_CREATE
 	feedEvent.Feed = feed
-	// producer.PublishJSONAsync("feed", feedEvent, nil)
-	_, err = db.NewFeed(session, feed)
-	if err != nil {
-		HandleError(err)
-		response.Success = false
-		response.Error = protocol.ERROR_INVALID_REQUEST
-		JSONResponse(response, w)
-		return
-	}
+	go producer.PublishJSONAsync("feed", feedEvent, nil)
 
 	response.Success = true
 	response.Feed = feed
@@ -114,7 +107,6 @@ func SearchMusic(w http.ResponseWriter, r *http.Request) {
 	}
 	response.Success = true
 	response.Musics = musics
-	log.Infoln(response)
 	JSONResponse(response, w)
 }
 
@@ -173,13 +165,15 @@ func GetFeedById(w http.ResponseWriter, r *http.Request) {
 // DelFeed need a feedId and delete it
 func DelFeed(w http.ResponseWriter, r *http.Request) {
 	var (
-		err      error
-		feed     *db.Feed
-		userId   bson.ObjectId
-		feedId   bson.ObjectId
-		response *db.FeedResponse
+		err       error
+		feed      *db.Feed
+		feedEvent *event.FeedEvent
+		userId    bson.ObjectId
+		feedId    bson.ObjectId
+		response  *db.FeedResponse
 	)
 	response = new(db.FeedResponse)
+	feedEvent = new(event.FeedEvent)
 
 	userId, err = auth.GetTokenFromRequest(r)
 	if err != nil {
@@ -208,15 +202,10 @@ func DelFeed(w http.ResponseWriter, r *http.Request) {
 	feed, err = db.GetFeedById(session, feedId)
 	if err == nil {
 		if feed.UserId == userId {
-			err = db.DeleteFeed(session, feedId)
-			err = db.DeleteCommentByFeedId(session, feedId)
-			if err != nil {
-				HandleError(err)
-				response.Success = false
-				response.Error = protocol.ERROR_INTERNAL_ERROR
-				JSONResponse(response, w)
-				return
-			}
+			feedEvent.EventId = event.EVENT_FEED_REMOVE
+			feedEvent.FeedId = feed.FeedId
+			// push message to nsq
+			go producer.PublishJSONAsync("feed", feedEvent, nil)
 		} else {
 			response.Success = false
 			response.Error = protocol.ERROR_AUTH

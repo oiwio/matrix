@@ -3,9 +3,9 @@ package handlers
 import (
 	"encoding/json"
 	"matrix/auth"
-	"matrix/modules/db"
-	"matrix/modules/protocol"
 	"net/http"
+	"zion/db"
+	"zion/protocol"
 
 	"github.com/gorilla/mux"
 	"gopkg.in/mgo.v2/bson"

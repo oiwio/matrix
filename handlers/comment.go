@@ -3,11 +3,13 @@ package handlers
 import (
 	"encoding/json"
 	"matrix/auth"
-	"matrix/modules/db"
-	"matrix/modules/protocol"
+	"matrix/producer"
 	"net/http"
 	"strconv"
 	"time"
+	"zion/db"
+	"zion/event"
+	"zion/protocol"
 
 	"errors"
 
@@ -30,9 +32,12 @@ func PostComment(w http.ResponseWriter, r *http.Request) {
 		err         error
 		response    *db.CommentResponse
 		comment     *db.Comment
+		feedEvent   *event.FeedEvent
 	)
 
 	response = new(db.CommentResponse)
+	feedEvent = new(event.FeedEvent)
+
 	userId, err = auth.GetTokenFromRequest(r)
 	if err != nil {
 		HandleError(err)
@@ -66,6 +71,7 @@ func PostComment(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	comment = new(db.Comment)
+	comment.CommentId = bson.NewObjectId()
 	comment.FeedId = bson.ObjectIdHex(rb.FeedId)
 	if rb.ReferenceId != "" {
 		referenceId = bson.ObjectIdHex(rb.ReferenceId)
@@ -78,14 +84,10 @@ func PostComment(w http.ResponseWriter, r *http.Request) {
 	}
 	comment.CreateAt = time.Now().Unix()
 
-	comment, err = db.NewComment(session, comment)
-	if err != nil {
-		HandleError(err)
-		response.Success = false
-		response.Error = protocol.ERROR_INTERNAL_ERROR
-		JSONResponse(response, w)
-		return
-	}
+	feedEvent.EventId = event.EVENT_FEED_COMMENT_POST
+	feedEvent.Comment = comment
+	go producer.PublishJSONAsync("feed", feedEvent, nil)
+
 	response.Success = true
 	response.Comment = comment
 	JSONResponse(response, w)
@@ -146,7 +148,7 @@ func GetCommentsByFeedId(w http.ResponseWriter, r *http.Request) {
 	JSONResponse(response, w)
 }
 
-// DelComment need a feedId and delete it
+// DelComment need a commentId and delete it
 func DelComment(w http.ResponseWriter, r *http.Request) {
 	var (
 		err       error
@@ -155,8 +157,10 @@ func DelComment(w http.ResponseWriter, r *http.Request) {
 		userId    bson.ObjectId
 		commentId bson.ObjectId
 		response  *db.Response
+		feedEvent *event.FeedEvent
 	)
 	response = new(db.Response)
+	feedEvent = new(event.FeedEvent)
 
 	userId, err = auth.GetTokenFromRequest(r)
 	if err != nil {
@@ -185,14 +189,10 @@ func DelComment(w http.ResponseWriter, r *http.Request) {
 	feed, err = db.GetFeedById(session, comment.FeedId)
 	if err == nil {
 		if comment.Author.UserId == userId || feed.UserId == userId {
-			err = db.DeleteComment(session, commentId)
-			if err != nil {
-				HandleError(err)
-				response.Success = false
-				response.Error = protocol.ERROR_INTERNAL_ERROR
-				JSONResponse(response, w)
-				return
-			}
+			feedEvent.EventId = event.EVENT_FEED_COMMENT_REMOVE
+			feedEvent.CommentId = commentId
+			go producer.PublishJSONAsync("feed", feedEvent, nil)
+
 		} else {
 			response.Success = false
 			response.Error = protocol.ERROR_AUTH

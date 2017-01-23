@@ -3,10 +3,10 @@ package handlers
 import (
 	"encoding/json"
 	"matrix/auth"
-	"matrix/modules/db"
-	"matrix/modules/protocol"
 	"net/http"
 	"regexp"
+	"zion/db"
+	"zion/protocol"
 
 	"gopkg.in/mgo.v2/bson"
 
@@ -42,7 +42,9 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		JSONResponse(response, w)
 		return
 	}
+
 	user = new(db.User)
+	user.UserId = bson.NewObjectId()
 	user.Nickname = register.Nickname
 	user.Username = register.Username
 	user.Gender = register.Gender
