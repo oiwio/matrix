@@ -9,5 +9,6 @@ func InitRoutes() *mux.Router {
 	router = SetAccountRoutes(router)
 	router = SetUserRoutes(router)
 	router = SetFeedRoutes(router)
+	router = SetFriendRoutes(router)
 	return router
 }

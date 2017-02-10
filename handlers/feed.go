@@ -4,18 +4,19 @@ import (
 	"encoding/json"
 	"matrix/auth"
 	"matrix/producer"
+	"net/http"
+	"strconv"
+	"time"
 	"zion/db"
 	"zion/event"
 	"zion/protocol"
 	"zion/tools"
-	// "matrix/producer"
-	"net/http"
-	"strconv"
-	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"gopkg.in/mgo.v2/bson"
+	qiniuconf "qiniupkg.com/api.v7/conf"
+	"qiniupkg.com/api.v7/kodo"
 )
 
 // PostFeed receive POST methods and store them in MongoDB
@@ -53,10 +54,6 @@ func PostFeed(w http.ResponseWriter, r *http.Request) {
 	feed.UserId = userId
 	feed.CreateAt = time.Now().Unix()
 	feed.UpdateAt = feed.CreateAt
-
-	//Create session for every request
-	session := mgoSession.Copy()
-	defer session.Close()
 
 	feedEvent.EventId = event.EVENT_FEED_CREATE
 	feedEvent.Feed = feed
@@ -236,7 +233,6 @@ func GetFeedsByUserId(w http.ResponseWriter, r *http.Request) {
 		response  *db.FeedResponse
 	)
 
-	log.Infoln(r.FormValue("u"))
 	response = new(db.FeedResponse)
 
 	_, err = auth.GetTokenFromRequest(r)
@@ -328,5 +324,55 @@ func GetNewestFeeds(w http.ResponseWriter, r *http.Request) {
 	}
 	response.Success = true
 	response.Feeds = feeds
+	JSONResponse(response, w)
+}
+
+// GetFeedById need a feedId and return the detail of feed
+func GetUploadToken(w http.ResponseWriter, r *http.Request) {
+	var (
+		err      error
+		response *db.FeedResponse
+		bucket   string
+	)
+	response = new(db.FeedResponse)
+
+	_, err = auth.GetTokenFromRequest(r)
+	if err != nil {
+		HandleError(err)
+		response.Success = false
+		response.Error = protocol.ERROR_NEED_SIGNIN
+		JSONResponse(response, w)
+		return
+	}
+
+	qiniuconf.ACCESS_KEY = configuration.Qiniu.AccessKey
+	qiniuconf.SECRET_KEY = configuration.Qiniu.SecretKey
+
+	switch mux.Vars(r)["Type"] {
+	case "image":
+		bucket = "aladdin-image"
+	case "video":
+		bucket = "aladdin-video"
+	default:
+		HandleError(err)
+		response.Success = false
+		response.Error = protocol.ERROR_INVALID_REQUEST
+		JSONResponse(response, w)
+		return
+	}
+
+	c := kodo.New(0, nil)
+
+	// 设置上传的策略
+	policy := &kodo.PutPolicy{
+		Scope: bucket,
+		//设置Token过期时间
+		Expires: 3600,
+	}
+	// 生成一个上传token
+	token := c.MakeUptoken(policy)
+
+	response.Success = true
+	response.UploadToken = token
 	JSONResponse(response, w)
 }

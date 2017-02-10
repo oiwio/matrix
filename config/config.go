@@ -10,6 +10,7 @@ type (
 		MongoDB        mongoDB
 		NSQ            nsq
 		Redis          redis
+		Qiniu          qiniu
 	}
 
 	server struct {
@@ -38,6 +39,11 @@ type (
 		Maxidle     int
 		Maxactive   int
 		Idletimeout int
+	}
+
+	qiniu struct {
+		AccessKey string
+		SecretKey string
 	}
 )
 

@@ -17,5 +17,8 @@ func SetFeedRoutes(router *mux.Router) *mux.Router {
 	router.HandleFunc("/comment", handlers.PostComment).Methods("POST")
 	router.HandleFunc("/comments", handlers.GetCommentsByFeedId).Methods("GET")
 	router.HandleFunc("/comment/{CommentId}", handlers.DelComment).Methods("DELETE")
+
+	router.HandleFunc("/feed/upload/{Type}", handlers.GetUploadToken).Methods("GET")
+
 	return router
 }

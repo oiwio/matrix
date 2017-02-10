@@ -7,7 +7,6 @@ import (
 	"matrix/producer"
 	"net/http"
 	"runtime"
-	"zion/db"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/garyburd/redigo/redis"
@@ -15,15 +14,14 @@ import (
 )
 
 var (
-	mgoSession *mgo.Session
-	ActiveUser *db.User
-	RedisConn  redis.Conn
+	mgoSession    *mgo.Session
+	RedisConn     redis.Conn
+	configuration config.Config
 )
 
 func init() {
 	var (
-		err           error
-		configuration config.Config
+		err error
 	)
 
 	configuration = config.New()
@@ -64,12 +62,3 @@ func HandleError(err error) {
 		log.Errorln(fmt.Sprintf("[error] %s:%d %v", fn, line, err.Error()))
 	}
 }
-
-// func checkActiveUser (r *http.Request){
-// 	var (
-// 		err   error
-// 		token string
-// 		user  *db.User
-// 	)
-// 	token=r.Header.Get()
-// }
