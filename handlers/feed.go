@@ -373,6 +373,6 @@ func GetUploadToken(w http.ResponseWriter, r *http.Request) {
 	token := c.MakeUptoken(policy)
 
 	response.Success = true
-	response.UploadToken = token
+	response.Token = token
 	JSONResponse(response, w)
 }
