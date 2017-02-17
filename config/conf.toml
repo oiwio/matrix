@@ -11,6 +11,9 @@ publicKeyPath  = "./secure/app.rsa.pub"
 tokenDuration = 720
 expireOffset  = 3600
 
+[Log]
+logPath="./log/matrix.log"
+
 [MongoDB]
 host = "127.0.0.1"
 

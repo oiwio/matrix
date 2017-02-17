@@ -7,6 +7,7 @@ type (
 		Title          string
 		Server         server
 		Authentication authentication
+		Log            log
 		MongoDB        mongoDB
 		NSQ            nsq
 		Redis          redis
@@ -24,6 +25,10 @@ type (
 		PublicKeyPath  string
 		TokenDuration  int
 		ExpireOffset   int
+	}
+
+	log struct {
+		LogPath string
 	}
 
 	mongoDB struct {

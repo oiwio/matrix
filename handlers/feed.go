@@ -12,7 +12,6 @@ import (
 	"zion/protocol"
 	"zion/tools"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"gopkg.in/mgo.v2/bson"
 	qiniuconf "qiniupkg.com/api.v7/conf"

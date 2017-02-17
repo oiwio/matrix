@@ -10,7 +10,6 @@ import (
 
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"gopkg.in/mgo.v2/bson"
 )
