@@ -200,6 +200,13 @@ func SignIn(w http.ResponseWriter, r *http.Request) {
 		JSONResponse(response, w)
 		return
 	}
+
+	// Cache user that have login
+	// err = cache.CacheActiveUsers(user.UserId.Hex(), time.Now().Unix())
+	// if err != nil {
+	// 	HandleError(err)
+	// }
+
 	response.Token = token
 	JSONResponse(response, w)
 }

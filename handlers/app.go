@@ -6,7 +6,6 @@ import (
 	"matrix/config"
 	"matrix/producer"
 	"net/http"
-	"os"
 	"runtime"
 
 	"github.com/Sirupsen/logrus"
@@ -32,12 +31,12 @@ func init() {
 	log.Formatter = new(logrus.JSONFormatter)
 	log.Formatter = new(logrus.TextFormatter) // default
 
-	file, err := os.OpenFile(configuration.Log.LogPath, os.O_CREATE|os.O_WRONLY, 0666)
-	if err == nil {
-		log.Out = file
-	} else {
-		log.Info("Failed to log to file, using default stderr")
-	}
+	// file, err := os.OpenFile(configuration.Log.LogPath, os.O_CREATE|os.O_WRONLY, 0666)
+	// if err == nil {
+	// 	log.Out = file
+	// } else {
+	// 	log.Info("Failed to log to file, using default stderr")
+	// }
 
 	log.Level = logrus.DebugLevel
 
